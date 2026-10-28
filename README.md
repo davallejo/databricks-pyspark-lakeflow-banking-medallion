@@ -160,7 +160,7 @@ Cada tarea ejecuta un notebook de la carpeta `banco_andino` del workspace. El no
 
 ---
 
-## 🏗️ Arquitectura
+## 🏗️ Arquitectura de Datos · Medallion Lakehouse
 
 ```mermaid
 flowchart LR
