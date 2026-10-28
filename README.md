@@ -80,6 +80,14 @@
 
 ## 📊 Dashboard
 
+<div align="center">
+
+[![Ver Dashboard en Databricks](https://img.shields.io/badge/📊_Ver_Dashboard_Ejecutivo-Banco_Andino-FF3621?style=for-the-badge&logo=databricks&logoColor=white)](https://dbc-3926ac24-a016.cloud.databricks.com/dashboardsv3/01f1c2602ddf15318f10d1d106d83494/published?o=1445421711211396)
+
+> 🔐 *El dashboard está publicado en Databricks Free Edition. Es necesario iniciar sesión en tu cuenta para visualizarlo.*
+
+</div>
+
 ### 📈 Página 1 · Resumen Ejecutivo
 
 ![Dashboard · Resumen Ejecutivo](docs/img/dashboard_resumen_ejecutivo.png)
