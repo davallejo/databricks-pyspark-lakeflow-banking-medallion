@@ -1,0 +1,1653 @@
+{
+  "datasets": [
+    {
+      "name": "64b902dd",
+      "displayName": "ds_info",
+      "queryLines": [
+        "-- DATASET: ds_info   (para mostrar la autoría en el dashboard)\r\n",
+        "SELECT autor, proyecto, version, ultima_ejecucion\r\n",
+        "FROM workspace.banco_gold.info_proyecto;"
+      ]
+    },
+    {
+      "name": "86116af8",
+      "displayName": "ds_totales",
+      "queryLines": [
+        "-- DATASET: ds_totales   (contadores/tarjetas KPI)\r\n",
+        "SELECT COUNT(*)                                        AS n_transacciones,\r\n",
+        "       ROUND(SUM(monto), 2)                            AS monto_total,\r\n",
+        "       COUNT(DISTINCT cliente_id)                      AS clientes_activos,\r\n",
+        "       SUM(CAST(es_alerta_monto_alto AS INT))          AS alertas_monto_alto\r\n",
+        "FROM workspace.banco_gold.fact_transacciones;"
+      ]
+    },
+    {
+      "name": "ab885e6f",
+      "displayName": "ds_mora",
+      "queryLines": [
+        "-- DATASET: ds_mora   (índice de mora de la cartera)\r\n",
+        "SELECT ROUND(100 * SUM(CASE WHEN estado IN ('En Mora', 'Castigado') THEN saldo_capital ELSE 0 END)\r\n",
+        "             / SUM(saldo_capital), 2)                  AS indice_mora_pct,\r\n",
+        "       ROUND(SUM(saldo_capital), 2)                    AS saldo_cartera_total\r\n",
+        "FROM workspace.banco_gold.cartera_prestamos;"
+      ]
+    },
+    {
+      "name": "13a5845a",
+      "displayName": "ds_kpi_mensual",
+      "queryLines": [
+        "-- DATASET: ds_kpi_mensual   (línea: ingresos vs egresos por mes)\r\n",
+        "SELECT anio_mes, n_transacciones, clientes_activos, monto_total, ingresos, egresos,\r\n",
+        "       flujo_neto, ticket_promedio, n_alertas_monto_alto\r\n",
+        "FROM workspace.banco_gold.kpi_mensual\r\n",
+        "ORDER BY anio_mes;"
+      ]
+    },
+    {
+      "name": "087c6504",
+      "displayName": "ds_transacciones",
+      "queryLines": [
+        "-- DATASET: ds_transacciones   (tabla ancha: base para los filtros y la mayoría de gráficos)\r\n",
+        "SELECT anio_mes, fecha, hora, dia_semana, tipo_transaccion, flujo, canal, categoria_comercio,\r\n",
+        "       monto, es_alerta_monto_alto, tipo_cuenta, segmento, genero, rango_edad,\r\n",
+        "       nombre_sucursal, ciudad, provincia, region, tx_id, cliente_id, cuenta_id\r\n",
+        "FROM workspace.banco_gold.fact_transacciones;"
+      ]
+    },
+    {
+      "name": "b7a467f6",
+      "displayName": "ds_alertas",
+      "queryLines": [
+        "-- DATASET: ds_alertas   (tabla: transacciones de monto alto)\r\n",
+        "SELECT tx_id, fecha_hora, tipo_transaccion, canal, monto, segmento, ciudad, nombre_sucursal\r\n",
+        "FROM workspace.banco_gold.fact_transacciones\r\n",
+        "WHERE es_alerta_monto_alto\r\n",
+        "ORDER BY monto DESC\r\n",
+        "LIMIT 50;"
+      ]
+    },
+    {
+      "name": "1aa012ee",
+      "displayName": "ds_cartera",
+      "queryLines": [
+        "-- DATASET: ds_cartera   (barras: cartera por producto y estado)\r\n",
+        "SELECT producto, estado, ciudad, segmento, n_prestamos, monto_aprobado, saldo_capital,\r\n",
+        "       tasa_promedio, dias_mora_promedio\r\n",
+        "FROM workspace.banco_gold.cartera_prestamos;"
+      ]
+    },
+    {
+      "name": "e56a910d",
+      "displayName": "ds_sucursal",
+      "queryLines": [
+        "-- DATASET: ds_sucursal   (barras: desempeño por sucursal)\r\n",
+        "SELECT nombre_sucursal, ciudad, region, n_cuentas, n_clientes, n_transacciones, monto_transaccionado\r\n",
+        "FROM workspace.banco_gold.resumen_sucursal\r\n",
+        "ORDER BY monto_transaccionado DESC;"
+      ]
+    },
+    {
+      "name": "ee03d084",
+      "displayName": "ds_segmento",
+      "queryLines": [
+        "-- DATASET: ds_segmento   (tabla/donut: clientes y monto por segmento)\r\n",
+        "SELECT segmento, n_clientes, ingreso_promedio, n_transacciones, monto_transaccionado, ticket_promedio\r\n",
+        "FROM workspace.banco_gold.resumen_segmento;"
+      ]
+    },
+    {
+      "name": "96cbc371",
+      "displayName": "ds_calidad",
+      "queryLines": [
+        "-- DATASET: ds_calidad   (tabla: calidad de datos por tabla)\r\n",
+        "SELECT tabla, filas_bronze, filas_silver, filas_rechazadas, pct_valido\r\n",
+        "FROM workspace.banco_gold.calidad_datos\r\n",
+        "ORDER BY tabla;"
+      ]
+    },
+    {
+      "name": "fca89545",
+      "displayName": "ds_rechazos",
+      "queryLines": [
+        "-- DATASET: ds_rechazos   (barras: por qué se rechazaron registros)\r\n",
+        "SELECT tabla_origen, motivo, n_registros\r\n",
+        "FROM workspace.banco_gold.rechazos_por_motivo\r\n",
+        "ORDER BY n_registros DESC;"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "bdce3cde",
+      "displayName": "Resumen Ejecutivo",
+      "layout": [
+        {
+          "widget": {
+            "name": "d96af644",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# Banco Andino · Dashboard Ejecutivo\n",
+                "\n",
+                "**Elaborado por Diego Vallejo** · Datos 100% ficticios"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "transacciones-validas",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "087c6504",
+                  "fields": [
+                    {
+                      "name": "count(tx_id)",
+                      "expression": "COUNT(`tx_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Transacciones válidas",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "count(tx_id)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "monto-total-usd",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "087c6504",
+                  "fields": [
+                    {
+                      "name": "sum(monto)",
+                      "expression": "SUM(`monto`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Monto total (USD)",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(monto)"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "clientes-activos",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "087c6504",
+                  "fields": [
+                    {
+                      "name": "countdistinct(cliente_id)",
+                      "expression": "COUNT(DISTINCT `cliente_id`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Clientes activos",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "countdistinct(cliente_id)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 2
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "alertas-monto-alto",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "86116af8",
+                  "fields": [
+                    {
+                      "name": "sum(alertas_monto_alto)",
+                      "expression": "SUM(`alertas_monto_alto`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Alertas de monto alto",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(alertas_monto_alto)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "indice-de-mora",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ab885e6f",
+                  "fields": [
+                    {
+                      "name": "avg(indice_mora_pct)",
+                      "expression": "AVG(`indice_mora_pct`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Índice de mora (%)",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(indice_mora_pct)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "saldo-cartera-usd",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ab885e6f",
+                  "fields": [
+                    {
+                      "name": "sum(saldo_cartera_total)",
+                      "expression": "SUM(`saldo_cartera_total`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Saldo de cartera (USD)",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(saldo_cartera_total)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 2
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 10,
+            "y": 2,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "ingresos-vs-egresos-por-mes-usd",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "13a5845a",
+                  "fields": [
+                    {
+                      "name": "sum(ingresos)",
+                      "expression": "SUM(`ingresos`)"
+                    },
+                    {
+                      "name": "anio_mes",
+                      "expression": "`anio_mes`"
+                    },
+                    {
+                      "name": "sum(egresos)",
+                      "expression": "SUM(`egresos`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Ingresos vs egresos por mes (USD)",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "anio_mes",
+                  "axis": {
+                    "title": "Año - Mes"
+                  },
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "fields": [
+                    {
+                      "fieldName": "sum(ingresos)",
+                      "displayName": "Ingresos"
+                    },
+                    {
+                      "fieldName": "sum(egresos)",
+                      "displayName": "Egresos"
+                    }
+                  ],
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    }
+                  },
+                  "axis": {
+                    "title": "Monto"
+                  }
+                },
+                "label": {
+                  "show": true,
+                  "text": {
+                    "fieldName": "sum(ingresos)",
+                    "displayName": "Ingresos"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "transacciones-por-canal",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "087c6504",
+                  "fields": [
+                    {
+                      "name": "count(tx_id)",
+                      "expression": "COUNT(`tx_id`)"
+                    },
+                    {
+                      "name": "canal",
+                      "expression": "`canal`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "showDescription": false,
+                "title": {
+                  "value": "Transacciones por canal",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "canal",
+                  "axis": {
+                    "title": "Canal"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "count(tx_id)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    }
+                  },
+                  "axis": {
+                    "title": "Transacciones"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true,
+                  "text": {
+                    "fieldName": "count(tx_id)"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 4,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "monto-transaccionado-por-sucursal-usd",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "e56a910d",
+                  "fields": [
+                    {
+                      "name": "nombre_sucursal",
+                      "expression": "`nombre_sucursal`"
+                    },
+                    {
+                      "name": "sum(monto_transaccionado)",
+                      "expression": "SUM(`monto_transaccionado`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Monto transaccionado por sucursal (USD)",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "nombre_sucursal",
+                  "axis": {
+                    "title": "Sucursal"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(monto_transaccionado)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    }
+                  },
+                  "axis": {
+                    "title": "Monto"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 10,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "monto-por-segmento-de-cliente",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ee03d084",
+                  "fields": [
+                    {
+                      "name": "sum(monto_transaccionado)",
+                      "expression": "SUM(`monto_transaccionado`)"
+                    },
+                    {
+                      "name": "segmento",
+                      "expression": "`segmento`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Monto por segmento de cliente",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "pie",
+              "encodings": {
+                "angle": {
+                  "fieldName": "sum(monto_transaccionado)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 2
+                    }
+                  },
+                  "axis": {
+                    "hideTitle": true
+                  }
+                },
+                "color": {
+                  "fieldName": "segmento",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 10,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "transacciones-monto-alto-top-50",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "b7a467f6",
+                  "fields": [
+                    {
+                      "name": "monto",
+                      "expression": "`monto`"
+                    },
+                    {
+                      "name": "canal",
+                      "expression": "`canal`"
+                    },
+                    {
+                      "name": "ciudad",
+                      "expression": "`ciudad`"
+                    },
+                    {
+                      "name": "nombre_sucursal",
+                      "expression": "`nombre_sucursal`"
+                    },
+                    {
+                      "name": "segmento",
+                      "expression": "`segmento`"
+                    },
+                    {
+                      "name": "tipo_transaccion",
+                      "expression": "`tipo_transaccion`"
+                    },
+                    {
+                      "name": "fecha_hora",
+                      "expression": "`fecha_hora`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Transacciones de monto alto (top 50)",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "monto",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 2
+                      },
+                      "hideGroupSeparator": false
+                    },
+                    "displayName": "Monto"
+                  },
+                  {
+                    "fieldName": "canal",
+                    "displayName": "Canal"
+                  },
+                  {
+                    "fieldName": "ciudad",
+                    "displayName": "Ciudad"
+                  },
+                  {
+                    "fieldName": "nombre_sucursal",
+                    "displayName": "Sucursal"
+                  },
+                  {
+                    "fieldName": "segmento",
+                    "displayName": "Segmento"
+                  },
+                  {
+                    "fieldName": "tipo_transaccion",
+                    "displayName": "Transacción"
+                  },
+                  {
+                    "fieldName": "fecha_hora",
+                    "displayName": "Fecha y hora"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 16,
+            "width": 12,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "31309940",
+      "displayName": "Cartera y Calidad",
+      "layout": [
+        {
+          "widget": {
+            "name": "6ed65733",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# Cartera y Calidad de Datos\n",
+                "\n",
+                "**Elaborado por Diego Vallejo** · Datos 100% ficticios"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 12,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "saldo-cartera-producto-estado-usd",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "1aa012ee",
+                  "fields": [
+                    {
+                      "name": "estado",
+                      "expression": "`estado`"
+                    },
+                    {
+                      "name": "sum(saldo_capital)",
+                      "expression": "SUM(`saldo_capital`)"
+                    },
+                    {
+                      "name": "producto",
+                      "expression": "`producto`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Saldo de cartera por producto y estado (USD)",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "producto",
+                  "displayName": "Producto",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(saldo_capital)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    }
+                  },
+                  "axis": {
+                    "title": "Saldo"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "estado",
+                  "legend": {
+                    "title": "Estado"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Vigente",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 1
+                        }
+                      },
+                      {
+                        "value": "Cancelado",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 7
+                        }
+                      },
+                      {
+                        "value": "En Mora",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 2
+                        }
+                      },
+                      {
+                        "value": "Castigado",
+                        "color": "#AC8CEC"
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true,
+                  "showTotal": true,
+                  "text": {
+                    "fieldName": "sum(saldo_capital)"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "numero-prestamos-por-estado",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "1aa012ee",
+                  "fields": [
+                    {
+                      "name": "estado",
+                      "expression": "`estado`"
+                    },
+                    {
+                      "name": "sum(n_prestamos)",
+                      "expression": "SUM(`n_prestamos`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Número de préstamos por estado.",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "estado",
+                  "axis": {
+                    "title": "Estado"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(n_prestamos)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    },
+                    "hideGroupSeparator": false
+                  },
+                  "axis": {
+                    "title": "Préstamos"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "calidad-datos-tabla",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "96cbc371",
+                  "fields": [
+                    {
+                      "name": "filas_bronze",
+                      "expression": "`filas_bronze`"
+                    },
+                    {
+                      "name": "filas_silver",
+                      "expression": "`filas_silver`"
+                    },
+                    {
+                      "name": "filas_rechazadas",
+                      "expression": "`filas_rechazadas`"
+                    },
+                    {
+                      "name": "pct_valido",
+                      "expression": "`pct_valido`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Calidad de datos por tabla",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "filas_bronze",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    },
+                    "displayName": "Data Bronce"
+                  },
+                  {
+                    "fieldName": "filas_silver",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    },
+                    "displayName": "Data Silver"
+                  },
+                  {
+                    "fieldName": "filas_rechazadas",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    },
+                    "displayName": "Data Rechazo"
+                  },
+                  {
+                    "fieldName": "pct_valido",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 2
+                      },
+                      "hideGroupSeparator": true
+                    },
+                    "displayName": "Porcentaje Válido (%)"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "registros-rechazados-por-motivo",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fca89545",
+                  "fields": [
+                    {
+                      "name": "tabla_origen",
+                      "expression": "`tabla_origen`"
+                    },
+                    {
+                      "name": "sum(n_registros)",
+                      "expression": "SUM(`n_registros`)"
+                    },
+                    {
+                      "name": "motivo",
+                      "expression": "`motivo`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Registros rechazados por motivo",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "motivo",
+                  "axis": {
+                    "title": "Motivo"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(n_registros)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 0
+                    }
+                  },
+                  "axis": {
+                    "title": "Registtos"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "tabla_origen",
+                  "displayName": "Origen",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "clientes",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 3
+                        }
+                      },
+                      {
+                        "value": "cuentas",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 8
+                        }
+                      },
+                      {
+                        "value": "prestamos",
+                        "color": "#4C6BDA"
+                      },
+                      {
+                        "value": "transacciones",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 5
+                        }
+                      }
+                    ]
+                  }
+                },
+                "label": {
+                  "show": true,
+                  "showTotal": true,
+                  "text": {
+                    "fieldName": "sum(n_registros)"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 8,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "ad3cb487",
+      "displayName": "Global Filters",
+      "layout": [
+        {
+          "widget": {
+            "name": "ciudad",
+            "queries": [
+              {
+                "name": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261c0ce1479bbc7cbae4a1a4533_ciudad",
+                "query": {
+                  "datasetName": "087c6504",
+                  "fields": [
+                    {
+                      "name": "ciudad",
+                      "expression": "`ciudad`"
+                    },
+                    {
+                      "name": "ciudad_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261d33916af9438a8018e9e95c0_ciudad",
+                "query": {
+                  "datasetName": "b7a467f6",
+                  "fields": [
+                    {
+                      "name": "ciudad",
+                      "expression": "`ciudad`"
+                    },
+                    {
+                      "name": "ciudad_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261f45c1040a33a21507319bf2a_ciudad",
+                "query": {
+                  "datasetName": "e56a910d",
+                  "fields": [
+                    {
+                      "name": "ciudad",
+                      "expression": "`ciudad`"
+                    },
+                    {
+                      "name": "ciudad_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261e64418dfab0298bfbc5bfac7_ciudad",
+                "query": {
+                  "datasetName": "1aa012ee",
+                  "fields": [
+                    {
+                      "name": "ciudad",
+                      "expression": "`ciudad`"
+                    },
+                    {
+                      "name": "ciudad_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Ciudad",
+                  "fields": []
+                }
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "ciudad",
+                    "queryName": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261c0ce1479bbc7cbae4a1a4533_ciudad"
+                  },
+                  {
+                    "fieldName": "ciudad",
+                    "queryName": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261d33916af9438a8018e9e95c0_ciudad"
+                  },
+                  {
+                    "fieldName": "ciudad",
+                    "queryName": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261f45c1040a33a21507319bf2a_ciudad"
+                  },
+                  {
+                    "fieldName": "ciudad",
+                    "queryName": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261e64418dfab0298bfbc5bfac7_ciudad"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "segmento",
+            "queries": [
+              {
+                "name": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261c0ce1479bbc7cbae4a1a4533_segmento",
+                "query": {
+                  "datasetName": "087c6504",
+                  "fields": [
+                    {
+                      "name": "segmento",
+                      "expression": "`segmento`"
+                    },
+                    {
+                      "name": "segmento_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261d33916af9438a8018e9e95c0_segmento",
+                "query": {
+                  "datasetName": "b7a467f6",
+                  "fields": [
+                    {
+                      "name": "segmento",
+                      "expression": "`segmento`"
+                    },
+                    {
+                      "name": "segmento_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c262126d14278e5572bc1ef7861f_segmento",
+                "query": {
+                  "datasetName": "ee03d084",
+                  "fields": [
+                    {
+                      "name": "segmento",
+                      "expression": "`segmento`"
+                    },
+                    {
+                      "name": "segmento_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261e64418dfab0298bfbc5bfac7_segmento",
+                "query": {
+                  "datasetName": "1aa012ee",
+                  "fields": [
+                    {
+                      "name": "segmento",
+                      "expression": "`segmento`"
+                    },
+                    {
+                      "name": "segmento_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Segmento",
+                  "fields": []
+                }
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "segmento",
+                    "queryName": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261c0ce1479bbc7cbae4a1a4533_segmento"
+                  },
+                  {
+                    "fieldName": "segmento",
+                    "queryName": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261d33916af9438a8018e9e95c0_segmento"
+                  },
+                  {
+                    "fieldName": "segmento",
+                    "queryName": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c262126d14278e5572bc1ef7861f_segmento"
+                  },
+                  {
+                    "fieldName": "segmento",
+                    "queryName": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261e64418dfab0298bfbc5bfac7_segmento"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 1,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "mes",
+            "queries": [
+              {
+                "name": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261c0ce1479bbc7cbae4a1a4533_anio_mes",
+                "query": {
+                  "datasetName": "087c6504",
+                  "fields": [
+                    {
+                      "name": "anio_mes",
+                      "expression": "`anio_mes`"
+                    },
+                    {
+                      "name": "anio_mes_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261b5681da390a83abda6c1b41f_anio_mes",
+                "query": {
+                  "datasetName": "13a5845a",
+                  "fields": [
+                    {
+                      "name": "anio_mes",
+                      "expression": "`anio_mes`"
+                    },
+                    {
+                      "name": "anio_mes_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Mes",
+                  "fields": []
+                }
+              },
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "anio_mes",
+                    "queryName": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261c0ce1479bbc7cbae4a1a4533_anio_mes"
+                  },
+                  {
+                    "fieldName": "anio_mes",
+                    "queryName": "dashboards/01f1c2602ddf15318f10d1d106d83494/datasets/01f1c261b5681da390a83abda6c1b41f_anio_mes"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 6,
+            "width": 1,
+            "height": 2
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_GLOBAL_FILTERS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}

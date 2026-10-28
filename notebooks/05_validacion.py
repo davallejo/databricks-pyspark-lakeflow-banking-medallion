@@ -43,4 +43,4 @@ autor = spark.table(f"{GOLD}.info_proyecto").first()["autor"]
 assert autor == "Diego Vallejo"
 print(f"✅ Autoría registrada: {autor}")
 
-print(f"\n🎉 VALIDACIÓN COMPLETA: el pipeline está listo para el dashboard.")
+print("\n🎉 VALIDACIÓN COMPLETA: el pipeline está listo para el dashboard.")

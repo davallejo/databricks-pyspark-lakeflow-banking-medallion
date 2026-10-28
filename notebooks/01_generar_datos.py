@@ -231,6 +231,7 @@ def generar(ruta_salida):
     print(f"Archivos creados en: {ruta_salida}")
 
 
+
 # COMMAND ----------
 
 CATALOGO = spark.sql("SELECT current_catalog()").first()[0]
